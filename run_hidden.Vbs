@@ -1,7 +1,7 @@
 Set WshShell = CreateObject("WScript.Shell")
 
-' Define the path to the Registration.py script in the temp folder
-registration_script_path = WshShell.ExpandEnvironmentStrings("%TEMP%\Xurhf82819\Registration.py")
+' Define the path to the batch file in the same folder as the VBScript
+batch_file_path = WshShell.CurrentDirectory & "\run_python.bat"
 
-' Run the Registration.py script using pythonw
-WshShell.Run "pythonw " & registration_script_path, 0
+' Run the batch file
+WshShell.Run batch_file_path, 0
